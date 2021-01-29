@@ -1,0 +1,76 @@
+Классы Аспекты отмечаются аннотациями @Configuration и @Aspect
+
+Аспект (англ. aspect) — модуль или класс, реализующий сквозную функциональность.
+Аспекты используют для отделения функционального кода от бизнес логики. К примеру авторизация, проверка прав доступа.
+Чтобы весь этот код не был в одном классе, их специально распределяют по отдельным классам.
+
+К примеру LoggingAspect - это аспект, реализующий функциональность авторизации.
+SecurityAspect - это аспект, реализующий проверку прав доступа.
+
+JoinPoint - точка соприкосновения аспекта с бизнес логикой:
+
+@Before("execution(* getStudents())")
+   public void beforeGetStudentsLoggingAdvice(){
+       System.out.println("beforeGetStudentsLoggingAdvice: логирование");
+}
+
+@Before("execution(* getStudents())") - означает, что описанный здесь код будет срабатывать до выполнения функции getStudents();
+"execution(* getStudents())"
+execution - хранит в себе имя метода, или методов
+* - значит что возвращаемый тип не имеет значение, он отрабоет и на void getStudents(), и на List<Student> getStudents();
+getStudents() - здесь явно указан для метода без аргументов. Если будут аргуементы, тогда их тоже нужно указывать: getStudents(University university);
+
+
+Анотации:
+@Before - отрабатывает до метода;
+@After - отрабатывает после метода;
+@AfterReturning - отрабатывает после метода, и можно менять возвращаемое значение;
+@AfterThrouble - отрабатывает после выброса исключения, применяют редко, в основном можно только вывести информации о исключении,
+обрабатывать исключение нельзя.
+@Around - отрабатывает до и после метода, но нужно использовать ProceedingJoinPoint proceedingJoinPoint, без него не отработает.
+proceedingJoinPoint.proceed() - возвращает Object. Этот объект нужно в конце вернуть, иначе не сработает.
+
+@Pointcut - это аннотации отметка для названия аспекта.
+
+@Pointcut("execution(* org.example.lesson2.aop.UniversityLibrary.abc*(..))")
+    public void allAddMethods(){}
+}
+Этот pointcut имеет название allAddMethods()
+
+Используется вот так:
+
+@Before(allAddMethods())
+public void beforeAllAddMethodsAdvice(){}
+
+Или вот так:
+@Before(allAddMethods() || allMethods())
+public void beforeAllAddMethodsAdvice(){}
+
+allMethods() - это тоже pointcut.
+
+JoinPoint - используется чтобы получить всю информацию о методе, его аргументов. Таким образом можно изменить/добавить функциональность к методу.
+@Before("org.example.lesson2.aop.aspects.MyPointcut.allAddMethods()")
+    public void beforeGetLoggingMethodAdvice(JoinPoint joinPoint){
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        System.out.println("methodSignature = " + methodSignature);
+        System.out.println("methodSignature.getMethod() = " + methodSignature.getMethod());
+        System.out.println("methodSignature.getReturnType() = " + methodSignature.getReturnType());
+        System.out.println("methodSignature.getName() = " + methodSignature.getName());
+        System.out.println("beforeGetLoggingMethodAdvice: Проверка авторизации");
+
+        if (methodSignature.getName().equals("addBook")){
+            Object[] arguments = joinPoint.getArgs();
+            for (Object obj : arguments){
+                if (obj instanceof Book){
+                    Book myBook = (Book) obj;
+                    System.out.println(
+                            "Информация о книге: название: " + myBook.getName() +
+                                    ", автор: " + myBook.getAuthor() +
+                            ", год публикации: " + myBook.getYearOfPublication()
+                        );
+                } else if (obj instanceof String){
+                    System.out.println("Книгу в библиотеку добавляет " + obj);
+                }
+            }
+        }
+    }

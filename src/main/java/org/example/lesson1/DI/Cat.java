@@ -1,4 +1,4 @@
-package org.example.lesson1;
+package org.example.lesson1.DI;
 
 import org.springframework.stereotype.Component;
 
